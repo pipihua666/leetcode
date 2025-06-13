@@ -1,0 +1,13 @@
+@import url(./style2.css);
+
+.block1 {
+  width: 100px;
+  height: 100px;
+  background-color: red;
+}
+
+.block2 {
+  width: 100px;
+  height: 100px;
+  background-color: green;
+}

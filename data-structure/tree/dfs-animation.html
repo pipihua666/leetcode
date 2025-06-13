@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度优先遍历 (DFS) 动画演示</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .tree-container {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+
+        .tree {
+            position: relative;
+        }
+
+        .node {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #f0f0f0;
+            border: 3px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            position: absolute;
+            transition: all 0.5s ease;
+            cursor: pointer;
+        }
+
+        .node.current {
+            background: #ff6b6b;
+            color: white;
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6);
+        }
+
+        .node.visited {
+            background: #4ecdc4;
+            color: white;
+        }
+
+        .node.processing {
+            background: #ffe66d;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .edge {
+            position: absolute;
+            background: #333;
+            height: 2px;
+            transform-origin: left center;
+            transition: all 0.5s ease;
+        }
+
+        .edge.active {
+            background: #ff6b6b;
+            height: 4px;
+        }
+
+        .traversal-order {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .order-display {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+
+        .order-item {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 16px;
+            background: #e9ecef;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .order-item.current {
+            background: #ff6b6b;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .speed-control {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .speed-slider {
+            width: 200px;
+            margin: 0 10px;
+        }
+
+        .info-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .algorithm-steps {
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .step {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>深度优先遍历 (DFS) 动画演示</h1>
+        
+        <div class="controls">
+            <button id="startBtn">开始遍历</button>
+            <button id="pauseBtn" disabled>暂停</button>
+            <button id="resetBtn">重置</button>
+            <button id="stepBtn">单步执行</button>
+        </div>
+
+        <div class="speed-control">
+            <label>动画速度: </label>
+            <input type="range" id="speedSlider" class="speed-slider" min="100" max="2000" value="1000">
+            <span id="speedValue">1000ms</span>
+        </div>
+
+        <div class="tree-container">
+            <div class="tree" id="treeContainer">
+                <!-- 树节点将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <div class="traversal-order">
+            <h3>遍历顺序:</h3>
+            <div class="order-display" id="orderDisplay">
+                <!-- 遍历顺序将在这里显示 -->
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <h3>算法说明:</h3>
+            <p>深度优先遍历(DFS)是一种用于遍历树或图的算法。它从根节点开始，尽可能深地搜索树的分支。</p>
+            
+            <div class="algorithm-steps">
+                <h4>算法步骤:</h4>
+                <div class="step" id="step1">1. 访问当前节点</div>
+                <div class="step" id="step2">2. 递归遍历所有子节点</div>
+                <div class="step" id="step3">3. 回溯到父节点</div>
+                <div class="step" id="step4">4. 继续遍历下一个子节点</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 树的数据结构
+        const tree = {
+            val: 'a',
+            x: 400,
+            y: 50,
+            children: [
+                {
+                    val: 'b',
+                    x: 200,
+                    y: 150,
+                    children: [
+                        {
+                            val: 'c',
+                            x: 100,
+                            y: 250,
+                            children: [
+                                {
+                                    val: 'd',
+                                    x: 50,
+                                    y: 350,
+                                    children: []
+                                }
+                            ]
+                        },
+                        {
+                            val: 'e',
+                            x: 300,
+                            y: 250,
+                            children: []
+                        }
+                    ]
+                },
+                {
+                    val: 'f',
+                    x: 600,
+                    y: 150,
+                    children: []
+                }
+            ]
+        };
+
+        let isAnimating = false;
+        let isPaused = false;
+        let animationSpeed = 1000;
+        let traversalOrder = [];
+        let currentStep = 0;
+        let animationTimeout;
+
+        // DOM 元素
+        const treeContainer = document.getElementById('treeContainer');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const orderDisplay = document.getElementById('orderDisplay');
+
+        // 初始化
+        function init() {
+            createTreeVisualization();
+            setupEventListeners();
+        }
+
+        // 创建树的可视化
+        function createTreeVisualization() {
+            treeContainer.innerHTML = '';
+            createNodes(tree);
+            createEdges(tree);
+        }
+
+        // 创建节点
+        function createNodes(node) {
+            const nodeElement = document.createElement('div');
+            nodeElement.className = 'node';
+            nodeElement.id = `node-${node.val}`;
+            nodeElement.textContent = node.val;
+            nodeElement.style.left = `${node.x - 25}px`;
+            nodeElement.style.top = `${node.y - 25}px`;
+            treeContainer.appendChild(nodeElement);
+
+            node.children.forEach(child => createNodes(child));
+        }
+
+        // 创建边
+        function createEdges(node) {
+            node.children.forEach(child => {
+                const edge = document.createElement('div');
+                edge.className = 'edge';
+                edge.id = `edge-${node.val}-${child.val}`;
+                
+                const dx = child.x - node.x;
+                const dy = child.y - node.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+                
+                edge.style.left = `${node.x}px`;
+                edge.style.top = `${node.y}px`;
+                edge.style.width = `${length}px`;
+                edge.style.transform = `rotate(${angle}deg)`;
+                
+                treeContainer.appendChild(edge);
+                createEdges(child);
+            });
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            startBtn.addEventListener('click', startAnimation);
+            pauseBtn.addEventListener('click', pauseAnimation);
+            resetBtn.addEventListener('click', resetAnimation);
+            stepBtn.addEventListener('click', stepAnimation);
+            speedSlider.addEventListener('input', updateSpeed);
+        }
+
+        // 更新速度
+        function updateSpeed() {
+            animationSpeed = parseInt(speedSlider.value);
+            speedValue.textContent = `${animationSpeed}ms`;
+        }
+
+        // 开始动画
+        function startAnimation() {
+            if (isPaused) {
+                isPaused = false;
+                continueAnimation();
+            } else {
+                resetAnimation();
+                isAnimating = true;
+                traversalOrder = [];
+                currentStep = 0;
+                updateOrderDisplay();
+                dfsAnimation(tree);
+            }
+            updateButtons();
+        }
+
+        // 暂停动画
+        function pauseAnimation() {
+            isPaused = true;
+            if (animationTimeout) {
+                clearTimeout(animationTimeout);
+            }
+            updateButtons();
+        }
+
+        // 重置动画
+        function resetAnimation() {
+            isAnimating = false;
+            isPaused = false;
+            currentStep = 0;
+            traversalOrder = [];
+            
+            if (animationTimeout) {
+                clearTimeout(animationTimeout);
+            }
+            
+            // 重置所有节点状态
+            document.querySelectorAll('.node').forEach(node => {
+                node.className = 'node';
+            });
+            
+            // 重置所有边状态
+            document.querySelectorAll('.edge').forEach(edge => {
+                edge.className = 'edge';
+            });
+            
+            // 重置算法步骤
+            document.querySelectorAll('.step').forEach(step => {
+                step.className = 'step';
+            });
+            
+            updateOrderDisplay();
+            updateButtons();
+        }
+
+        // 单步执行
+        function stepAnimation() {
+            if (!isAnimating && traversalOrder.length === 0) {
+                // 开始新的遍历
+                isAnimating = true;
+                traversalOrder = [];
+                currentStep = 0;
+                collectTraversalOrder(tree);
+            }
+            
+            if (currentStep < traversalOrder.length) {
+                const node = traversalOrder[currentStep];
+                highlightNode(node.val);
+                highlightStep(1);
+                currentStep++;
+                updateOrderDisplay();
+            }
+            
+            if (currentStep >= traversalOrder.length) {
+                isAnimating = false;
+            }
+            
+            updateButtons();
+        }
+
+        // 收集遍历顺序
+        function collectTraversalOrder(node) {
+            traversalOrder.push(node);
+            node.children.forEach(child => collectTraversalOrder(child));
+        }
+
+        // DFS 动画
+        async function dfsAnimation(node) {
+            if (isPaused) return;
+            
+            // 高亮当前节点
+            highlightNode(node.val);
+            highlightStep(1);
+            
+            // 添加到遍历顺序
+            traversalOrder.push(node);
+            updateOrderDisplay();
+            
+            await sleep(animationSpeed);
+            
+            if (isPaused) return;
+            
+            // 标记为已访问
+            markAsVisited(node.val);
+            
+            // 遍历子节点
+            for (let i = 0; i < node.children.length; i++) {
+                if (isPaused) return;
+                
+                const child = node.children[i];
+                
+                // 高亮边
+                highlightEdge(node.val, child.val);
+                highlightStep(2);
+                
+                await sleep(animationSpeed / 2);
+                
+                if (isPaused) return;
+                
+                // 递归遍历子节点
+                await dfsAnimation(child);
+                
+                if (isPaused) return;
+                
+                // 回溯
+                highlightStep(3);
+                await sleep(animationSpeed / 2);
+            }
+            
+            if (!isPaused && node === tree) {
+                // 遍历完成
+                isAnimating = false;
+                highlightStep(4);
+                updateButtons();
+            }
+        }
+
+        // 继续动画
+        function continueAnimation() {
+            // 这里可以实现暂停后继续的逻辑
+            // 为简化，重新开始动画
+            startAnimation();
+        }
+
+        // 高亮节点
+        function highlightNode(val) {
+            // 清除之前的高亮
+            document.querySelectorAll('.node.current').forEach(node => {
+                node.classList.remove('current');
+            });
+            
+            const node = document.getElementById(`node-${val}`);
+            if (node) {
+                node.classList.add('current');
+            }
+        }
+
+        // 标记为已访问
+        function markAsVisited(val) {
+            const node = document.getElementById(`node-${val}`);
+            if (node) {
+                node.classList.remove('current');
+                node.classList.add('visited');
+            }
+        }
+
+        // 高亮边
+        function highlightEdge(from, to) {
+            // 清除之前的高亮
+            document.querySelectorAll('.edge.active').forEach(edge => {
+                edge.classList.remove('active');
+            });
+            
+            const edge = document.getElementById(`edge-${from}-${to}`);
+            if (edge) {
+                edge.classList.add('active');
+            }
+        }
+
+        // 高亮算法步骤
+        function highlightStep(stepNumber) {
+            document.querySelectorAll('.step').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            const step = document.getElementById(`step${stepNumber}`);
+            if (step) {
+                step.classList.add('active');
+            }
+        }
+
+        // 更新遍历顺序显示
+        function updateOrderDisplay() {
+            orderDisplay.innerHTML = '';
+            
+            traversalOrder.forEach((node, index) => {
+                const item = document.createElement('span');
+                item.className = 'order-item';
+                item.textContent = node.val;
+                
+                if (index === currentStep - 1) {
+                    item.classList.add('current');
+                }
+                
+                orderDisplay.appendChild(item);
+            });
+        }
+
+        // 更新按钮状态
+        function updateButtons() {
+            startBtn.disabled = isAnimating && !isPaused;
+            pauseBtn.disabled = !isAnimating || isPaused;
+            stepBtn.disabled = isAnimating && !isPaused;
+        }
+
+        // 睡眠函数
+        function sleep(ms) {
+            return new Promise(resolve => {
+                animationTimeout = setTimeout(resolve, ms);
+            });
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

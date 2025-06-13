@@ -1,0 +1,15 @@
+/* 通过 @import 引入的样式文件 */
+
+/* 引入其他CSS文件 */
+@import url('./style.css');
+
+#timer {
+	font-size: 18px;
+	font-weight: bold;
+	color: #333;
+	margin-bottom: 20px;
+	padding: 10px;
+	background-color: #fff;
+	border-radius: 5px;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" style="font-size: 2px">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1"
+    />
+    <title>CSS加载性能测试</title>
+
+    <style>
+      @import url('./import.css');
+    </style>
+    <!-- 注释掉link引入，使用纯CSS @import方式 -->
+    <link rel="stylesheet" href="./link.css" />
+  </head>
+  <body>
+    <div id="timer">页面加载中...</div>
+    <div class="container" data-device="2">
+      <div class="block1">
+        <p>
+          <li>
+            @import和 Link 的 区别是，嵌套的 import 文件只能串行加载，但是 link
+            的 css都是独立并行加载
+          </li>
+          <li>
+            @import 和 link 在下载阶段都不会阻塞 html 的解析(parse
+            html)，但是会阻塞渲染，也就是阻塞渲染树的生成
+          </li>
+        </p>
+        <p>
+          <li>
+            css,img,js等静态资源确实会在 还未到html
+            parse（解析）到相应标签位置时已经提前在请求队列排队了
+          </li>
+          <li>
+            引入 type module 的 js 模块时，会异步请求 js
+            模块及其依赖项，不会暂停页面的解析和渲染工作
+          </li>
+          <pre>
+            - readystatechange ：文档加载状态变化
+              - loading ：文档正在加载
+              - interactive ：文档加载完成，后执行 DOMContentLoaded
+              - complete ：所有资源加载完成，后执行 load
+          </pre>
+          <pre>
+            type module 的嵌套请求也是串行的
+          </pre>
+        </p>
+      </div>
+      <div class="block2"></div>
+    </div>
+    <script>
+      function inline() {
+        console.log('【readystatechange】', document.readyState)
+      }
+
+      inline()
+
+      document.addEventListener('readystatechange', (e) => {
+        console.log('【readystatechange】', document.readyState)
+      })
+      window.addEventListener('load', (e) => {
+        console.log('【load】')
+      })
+
+      document.addEventListener('DOMContentLoaded', (e) => {
+        console.log('【DOMContentLoaded】')
+      })
+    </script>
+    <script defer src="./a.js"></script>
+    <script async src="./b.js"></script>
+    <script src="./c.js" type="module"></script>
+  </body>
+</html>
